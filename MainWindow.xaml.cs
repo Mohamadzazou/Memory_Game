@@ -118,46 +118,57 @@ namespace Memory_Game
                 matchFound = false;
             }
         }*/
-        private void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
+        bool isBusy = false; // während wir 1 Sek. warten: keine Klicks annehmen
+        private async void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (isBusy) return;
+
             TextBlock textBlock = sender as TextBlock;
             if (textBlock == null) return;
-            if (textBlock == timeTextBlock) return;      // Zeit-Text ignorieren
+            if (textBlock == timeTextBlock) return;
 
             // Schon offen? Dann nichts tun
             if (textBlock.Text != "?") return;
 
-            // Aktuelle Karte aufdecken (Symbol steckt in Tag, wurde in startGame gesetzt)
+            // Aufdecken (Symbol steckt in Tag, wurde in startGame gesetzt)
             string symbol = textBlock.Tag as string;
             if (symbol == null) return;
             textBlock.Text = symbol;
 
             if (matchFound == false)
             {
-                // Erster Klick in der Runde
+                // Erste Karte
                 textblockclicked = textBlock;
                 matchFound = true;
                 return;
             }
 
-            // Zweiter Klick: vergleichen
+            // Zweite Karte
             if (textblockclicked != null && (textblockclicked.Tag as string) == symbol)
             {
-                // Treffer -> beide verschwinden
+                // Treffer: beide verschwinden
                 textBlock.Visibility = Visibility.Hidden;
                 textblockclicked.Visibility = Visibility.Hidden;
                 matchsFound = matchsFound + 1;
+
+                // Runde zurücksetzen
+                textblockclicked = null;
+                matchFound = false;
             }
             else
             {
-                // Kein Treffer -> beide wieder verdecken
+                // Kein Treffer: 1 Sekunde zeigen, dann wieder zudecken
+                isBusy = true;
+                await Task.Delay(1000); // 1000 ms = 1 s (nimm 2000 für 2 s)
+
                 textBlock.Text = "?";
                 if (textblockclicked != null) textblockclicked.Text = "?";
-            }
 
-            // Runde zurücksetzen
-            textblockclicked = null;
-            matchFound = false;
+                // Runde zurücksetzen
+                textblockclicked = null;
+                matchFound = false;
+                isBusy = false;
+            }
         }
 
 
